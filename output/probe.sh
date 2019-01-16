@@ -6,7 +6,7 @@
        classify=1 \
        output=auto \
        count=10 \
-       verbosity=1 \
+       verbosity=2 \
        show_interfaces=1 \
        username=root \
        model="~/classifiers/params.txt:~/classifiers/params_bd.txt" \
