@@ -9,6 +9,5 @@
        verbosity=1 \
        show_interfaces=1 \
        username=root \
-       model="params.txt:params_bd.txt" \
-       URLmodel="https://github.com/mjtooley/PirateHunter/blob/master" \
+       model="~/classifiers/params.txt:~/classifiers/params_bd.txt" \
        interface=$1
