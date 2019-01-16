@@ -39,8 +39,8 @@ services:
 # Uncomment to run it in host mode
 #     network_mode: "host"
 #     volumes:
-#       - output:/PirateHunter/output
-#     entrypoint: /PirateHunter/output/collector.sh enx00e04c780c01
+#       - output:/PirateFinder/output
+#     entrypoint: /PirateFinder/output/collector.sh enx00e04c780c01
 
   probe:
      build:
@@ -55,18 +55,20 @@ services:
 # Uncomment to run it in host mode
      network_mode: "host"
      volumes:
-       - output:/PirateHunter/output
+       - output:/PirateFinder/output
        
-     entrypoint: /PirateHunter/output/probe.sh enx00e04c780c01
+     entrypoint: /PirateFinder/output/probe.sh enx00e04c780c01
 
   dashboard:
      build: dashboard
+     container_name: dashboard
+     restart: always
 #     networks:
 #     - grafana-net
      network_mode: "host"
      volumes:
-     - output:/PirateHunter/output
-     working_dir: /PirateHunter
+     - output:/PirateFinder/output
+     working_dir: /PirateFinder
 
 #networks:
 #  grafana-net:
