@@ -9,5 +9,5 @@
        verbosity=2 \
        show_interfaces=1 \
        username=root \
-       model="~/classifiers/params.txt:~/classifiers/params_bd.txt" \
+       model="~/PirateFinder/classifiers/params.txt:~/PirateFinder/classifiers/params_bd.txt" \
        interface=$1
