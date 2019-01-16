@@ -7,6 +7,7 @@ FROM mjtooley/joy_v4
 
 MAINTAINER Matt Tooley
 
+RUN apt-get update && apt-get install inotify-tools -y
 ############## Begin Installation ###########
 RUN git clone https://github.com/mjtooley/PirateFinder.git
 WORKDIR /PirateFinder
