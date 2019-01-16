@@ -1,0 +1,77 @@
+version: "3"
+services: 
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports: 
+      - 3000:3000
+# Uncomment for it to use a bridged network
+#    networks:
+#      - grafana-net
+# Uncomment to run it in host mode
+    network_mode: "host"
+    volumes:
+      - grafana-volume
+
+  graphite:
+     image: graphiteapp/graphite-statsd
+     container_name: graphite
+     restart: always
+# Uncomment for it to use a bridged network
+#     networks:
+#       - grafana-net
+# Uncomment to run it in host mode
+     network_mode: "host"
+
+#  collector:     
+#     build: 
+#       context: ./collector
+#       args:
+#         interface: eth0
+#     container_name: collector
+#     restart: always
+#     ports:
+#       - 5739:5739
+# Uncomment for it to use a bridged network
+#     networks:
+#       - grafana-net
+# Uncomment to run it in host mode
+#     network_mode: "host"
+#     volumes:
+#       - output:/PirateHunter/output
+#     entrypoint: /PirateHunter/output/collector.sh enx00e04c780c01
+
+  probe:
+     build:
+       context: ./probe
+       args:
+           interface: testfromdockercomposeyml
+     container_name: probe
+     restart: always
+# Uncomment for it to use a bridged network
+#     networks:
+#       - grafana-net
+# Uncomment to run it in host mode
+     network_mode: "host"
+     volumes:
+       - output:/PirateHunter/output
+       
+     entrypoint: /PirateHunter/output/probe.sh enx00e04c780c01
+
+  dashboard:
+     build: dashboard
+#     networks:
+#     - grafana-net
+     network_mode: "host"
+     volumes:
+     - output:/PirateHunter/output
+     working_dir: /PirateHunter
+
+#networks:
+#  grafana-net:
+
+volumes:
+  grafana-volume:
+    external: true
+  output:
