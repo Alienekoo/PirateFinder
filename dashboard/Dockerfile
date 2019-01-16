@@ -13,7 +13,7 @@ WORKDIR /PirateFinder
 # Set the default container command
 # ENTRYPOINT /PirateHunter/output/probe.sh eth0
 WORKDIR /PirateFinder/
-ENTRYPOINT ./dashboard.sh
+ENTRYPOINT ./dashmonitor.sh
 
 
 
