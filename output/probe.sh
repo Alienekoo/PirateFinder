@@ -6,7 +6,7 @@
        classify=1 \
        output=auto \
        count=10 \
-       verbosity=2 \
+       verbosity=3 \
        show_interfaces=1 \
        username=root \
        model="~/PirateFinder/classifiers/params.txt:~/PirateFinder/classifiers/params_bd.txt" \
