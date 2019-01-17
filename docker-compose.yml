@@ -56,8 +56,10 @@ services:
      network_mode: "host"
      volumes:
        - output:/PirateFinder/output
+       - ./classifiers:/PirateFinder/classifiers
+       - ./config:/PirateFinder/config
        
-     entrypoint: /PirateFinder/output/probe.sh enx00e04c780c01
+     entrypoint: /PirateFinder/output/probe.sh enp0s3
 
   dashboard:
      build: dashboard
