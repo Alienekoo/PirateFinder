@@ -10,16 +10,14 @@ do
                echo Post-processing $NEWFILE
                ./dashboard-post-process.sh $NEWFILE 0 > tmp_results.txt
                tmp_size=$(wc -c < tmp_results.txt)
-            fi
 
-            if [ $tmp_size -ge $MINIMUMSIZE ]; then
-               python Dashboard.py -i tmp_results.txt
-            fi
+               if [ $tmp_size -ge $MINIMUMSIZE ]; then
+                   python Dashboard.py -i tmp_results.txt
+               fi
 
             rm $NEWFILE
          else
-            echo "File $NEWFILE just created but still empty"
-            fi
+             echo "File $NEWFILE just created but still empty"
         fi
 done
 
