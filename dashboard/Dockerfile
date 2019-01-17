@@ -8,7 +8,9 @@ FROM mjtooley/joy_v4
 MAINTAINER Matt Tooley
 
 ############## Begin Installation ###########
-RUN apt-get update && apt-get install inotify-tools -y
+RUN apt-get update && apt-get install inotify-tools python python-pip -y
+RUN pip install IPy
+RUN pip install cymruwhois
 RUN git clone https://github.com/mjtooley/PirateFinder.git
 WORKDIR /PirateFinder
 RUN mkdir /PirateFinder/bin
