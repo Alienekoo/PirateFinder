@@ -18,7 +18,8 @@ do
 
             rm $NEWFILE
          else
-            #echo "File $NEWFILE just created but still empty"
+            echo "File $NEWFILE just created but still empty"
+            fi
         fi
 done
 
