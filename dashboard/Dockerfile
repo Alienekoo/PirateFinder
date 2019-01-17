@@ -17,7 +17,7 @@ RUN mkdir /PirateFinder/lib
 RUN cp /joy/bin/* /PirateFinder/bin
 RUN cp /joy/analysis/* /PirateFinder/analysis
 RUN cp /joy/sleuth /PirateFinder/sleuth
-RUN cp /joy/sleuth-pkg/* /PirateFinder/sleuth-pkg
+RUN cp -r /joy/sleuth_pkg/ /PirateFinder/sleuth_pkg
 
 # Set the default container command
 WORKDIR /PirateFinder/
