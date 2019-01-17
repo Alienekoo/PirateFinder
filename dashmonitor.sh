@@ -14,8 +14,8 @@ do
                if [ $tmp_size -ge $MINIMUMSIZE ]; then
                    python Dashboard.py -i tmp_results.txt
                fi
-
-            rm $NEWFILE
+               rm $NEWFILE
+            fi
          else
              echo "File $NEWFILE just created but still empty"
         fi
