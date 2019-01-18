@@ -219,7 +219,7 @@ def main(argv):
             ip1 = saddr
             ip2 = daddr
 
-            probstring = fields[5]
+            probstring = fields[4]
             prob2 = probstring.split(":")
             prob3 = prob2[1]
             prob4 = prob3.split('}')
