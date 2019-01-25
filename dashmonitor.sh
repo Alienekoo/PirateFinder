@@ -14,7 +14,7 @@ do
         fi
         rm $NEWFILE
      else
-#        echo "File $NEWFILE just created but still empty"
+        echo "."
      fi
 done
 
