@@ -108,18 +108,24 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out):
     dest = dest.replace(",","-")
     ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
     if (float(prob) > 0.8):
-        message = "dashboard.piracy." + dest + ".bytes." + " " + str(bytes_out) + " " + str(ts) + "\n"
+        message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
+        print message
         sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".packets." + " " + str(pkts_out) + " " + str(ts) + "\n"
+        message = "dashboard.piracy." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
+        print message
         sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".probability." + " "  + str(prob) + " " + str(ts) + "\n"
+        message = "dashboard.piracy." + dest + ".probability" + " "  + str(prob) + " " + str(ts) + "\n"
+        print message
         sock.sendall(message)
     else:
-        message = "dashboard.web." + dest + ".bytes." + " " + str(bytes_out) + " " + str(ts) + "\n"
+        message = "dashboard.web." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
+        print message
         sock.sendall(message)
-        message = "dashboard.piracy." + ".packets." + dest + " " + str(pkts_out) + " " + str(ts) + "\n"
+        message = "dashboard.web." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
+        print message
         sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".probability." + " " + str(prob) + " " + str(ts) + "\n"
+        message = "dashboard.web." + dest + ".probability" + " " + str(prob) + " " + str(ts) + "\n"
+        print message
         sock.sendall(message)
 
 
