@@ -108,18 +108,18 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out):
     dest = dest.replace(",","-")
     ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
     if (float(prob) > 0.8):
-        message = "dashboard.piracy." + dest + ".bytes." + " " + str(bytes_out) + " " + str(ts) + "\n"
+        message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
         sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".packets." + " " + str(pkts_out) + " " + str(ts) + "\n"
+        message = "dashboard.piracy." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
         sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".probability." + " "  + str(prob) + " " + str(ts) + "\n"
+        message = "dashboard.piracy." + dest + ".probability" + " "  + str(prob) + " " + str(ts) + "\n"
         sock.sendall(message)
     else:
-        message = "dashboard.web." + dest + ".bytes." + " " + str(bytes_out) + " " + str(ts) + "\n"
+        message = "dashboard.web." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
         sock.sendall(message)
-        message = "dashboard.piracy." + ".packets." + dest + " " + str(pkts_out) + " " + str(ts) + "\n"
+        message = "dashboard.web." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
         sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".probability." + " " + str(prob) + " " + str(ts) + "\n"
+        message = "dashboard.web." + dest + ".probability" + " " + str(prob) + " " + str(ts) + "\n"
         sock.sendall(message)
 
 
@@ -202,7 +202,9 @@ def main(argv):
 
             pkts_str = fields[7] # get num_pkts_out
             pkts_str2 = pkts_str.split(":")
-            num_pkts_out = pkts_str2[1]
+            pkts_str3 = pkts_str2[1]
+            pkts_str4 = pkts_str3.split("}")
+            num_pkts_out = pkts_str4[0]
 
             sa_string = fields[6] # Get the source address
             sa_string2 = sa_string.split(":")
@@ -226,9 +228,9 @@ def main(argv):
             prob = prob4[0]
 
             # Now check to see if the IPs are in the list
-            if ip_list.count(ip1) == 0 and publicIP(ip1):
+            if ip_list.count(ip1) == 0 :
                 addToList(ip1, ip2, prob, bytes_out, num_pkts_out)
-            elif ip_list.count(ip2) == 0 and publicIP(ip2):
+            elif ip_list.count(ip2) == 0 :
                 addToList(ip2,ip1, prob, bytes_out, num_pkts_out)
             else:
                 # we already know of these IPs, maybe we average the probability?
