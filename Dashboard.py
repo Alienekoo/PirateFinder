@@ -208,7 +208,9 @@ def main(argv):
 
             pkts_str = fields[7] # get num_pkts_out
             pkts_str2 = pkts_str.split(":")
-            num_pkts_out = pkts_str2[1]
+            pkts_str3 = pkts_str2[1]
+            pkts_str4 = pkts_str3.split("}")
+            num_pkts_out = pkts_str4[0]
 
             sa_string = fields[6] # Get the source address
             sa_string2 = sa_string.split(":")
