@@ -10,7 +10,7 @@ do
         ./dashboard-post-process.sh $NEWFILE 0 > tmp_results.txt
         tmp_size=$(wc -c < tmp_results.txt)
         if [ $tmp_size -ge $MINIMUMSIZE ]; then
-           python Dashboard.py -i tmp_results.txt
+           python Dashboard.py -i tmp_results.txt -o Y
         fi
         rm $NEWFILE
      else

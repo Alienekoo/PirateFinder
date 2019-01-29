@@ -95,44 +95,40 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out):
         if n in cdns:
             cdn_ips[ip1] = 'yes'
 
-    # Add it to the Graphite DB for Grafana
-    sock = socket()
-    try:
-        sock.connect( (CARBON_SERVER, CARBON_PORT))
-    except:
-        print ("Could NOT connect to Carbon, is Carbon running?")
-        sys.exit(1)
 
-    dest = name1.replace(".","-") # replace dots with dashes
-    dest = dest.replace(" ","") # remove whitespace
-    dest = dest.replace(",","-")
-    ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
-    if (float(prob) > 0.8):
-        message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
-        print message
-        sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
-        print message
-        sock.sendall(message)
-        message = "dashboard.piracy." + dest + ".probability" + " "  + str(prob) + " " + str(ts) + "\n"
-        print message
-        sock.sendall(message)
-    else:
-        message = "dashboard.web." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
-        print message
-        sock.sendall(message)
-        message = "dashboard.web." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
-        print message
-        sock.sendall(message)
-        message = "dashboard.web." + dest + ".probability" + " " + str(prob) + " " + str(ts) + "\n"
-        print message
-        sock.sendall(message)
+    if dashboard_f == True:
+        # Add it to the Graphite DB for Grafana
+        sock = socket()
+        try:
+            sock.connect( (CARBON_SERVER, CARBON_PORT))
+        except:
+            print ("Could NOT connect to Carbon, is Carbon running?")
+            sys.exit(1)
+
+        dest = name1.replace(".","-") # replace dots with dashes
+        dest = dest.replace(" ","") # remove whitespace
+        dest = dest.replace(",","-")
+        ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
+        if (float(prob) > 0.8):
+            message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
+            sock.sendall(message)
+            message = "dashboard.piracy." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
+            sock.sendall(message)
+            message = "dashboard.piracy." + dest + ".probability" + " "  + str(prob) + " " + str(ts) + "\n"
+            sock.sendall(message)
+        else:
+            message = "dashboard.web." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
+            sock.sendall(message)
+            message = "dashboard.web." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
+            sock.sendall(message)
+            message = "dashboard.web." + dest + ".probability" + " " + str(prob) + " " + str(ts) + "\n"
+            sock.sendall(message)
 
 
-    message = "dashboard.hosts." + dest + " " + str(prob) + " " + str(ts) + "\n"
-    sock.sendall(message)
+        message = "dashboard.hosts." + dest + " " + str(prob) + " " + str(ts) + "\n"
+        sock.sendall(message)
 
-    sock.close()
+        sock.close()
 
 
 def publicIP(ip_addr):
@@ -167,6 +163,7 @@ bytesout = {}
 saddr_d = {}
 cdn_ips = {}
 flow_cnt = {}
+dashboard_f = False
 
 dbase_name = 'pirates'
 
@@ -174,17 +171,23 @@ def main(argv):
 
     inputfile = ''
     try:
-        opts, args=getopt.getopt(argv,"hi:o",["ifile="])
+        opts, args=getopt.getopt(argv,"hi:o:",["help","ifile=","output="])
     except getopt.GetoptError:
-        print("dashboard-post-procss.py -i <inputfile>")
+        print("dashboard-post-procss.py -i <inputfile> -o [Y/N]")
         sys.exit(2)
 
     for opt, arg in opts:
         if opt == '-h':
-            print('dashboard-post-process   css.py -i <inputfile>')
+            print('usage: dashboard-post-process -i <inputfile> -o [Y/N]')
             sys.exit()
-        elif opt in ("-i", "--ifile"):
+        if opt in ("-i", "--ifile"):
             inputfile = arg
+        if opt in ("-o", "--output"):
+            if arg == 'Y':
+                dashboard_f = True
+            else:
+                dashboard_f = False
+
 
     # print ("Inputfile is:", inputfile)
     fname = inputfile
@@ -234,9 +237,9 @@ def main(argv):
             prob = prob4[0]
 
             # Now check to see if the IPs are in the list
-            if ip_list.count(ip1) == 0 and publicIP(ip1):
+            if ip_list.count(ip1) == 0 :
                 addToList(ip1, ip2, prob, bytes_out, num_pkts_out)
-            elif ip_list.count(ip2) == 0 and publicIP(ip2):
+            elif ip_list.count(ip2) == 0 :
                 addToList(ip2,ip1, prob, bytes_out, num_pkts_out)
             else:
                 # we already know of these IPs, maybe we average the probability?
