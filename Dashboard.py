@@ -31,10 +31,28 @@ import warnings
 from IPy import IP
 import time
 from cymruwhois import Client
+import os
 
 
 CARBON_SERVER = "127.0.0.1"
 CARBON_PORT = 2003
+
+#whitelist = {'AKAMAI', 'akamai', 'Google', 'MSFT', 'AMAZON-AES', 'CMCS',
+#             'MICROSOFT-CORP-MSN-AS-BLOCK'}
+
+whitelist = []
+
+def readWhitelist(filename):
+
+    if not os.path.isfile(filename):
+        print("File {} not found".format(filename))
+    with open (filename) as fp:
+        line = fp.readline()
+        while line:
+            # add to whitelist
+            whitelist.append(line.rstrip())
+            line = fp.readline()
+
 
 def tryWhoIs(ip_addr):
 
@@ -76,8 +94,7 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out):
     saddr_d[ip1] = ip2
     bytesout[ip1] = bytes_out
 
-    whitelist = {'AKAMAI', 'akamai', 'Google', 'MSFT', 'AMAZON-AES', 'CMCS',
-            'MICROSOFT-CORP-MSN-AS-BLOCK'}
+
     # Check to see if it is in the list of known cdns and public hosts
     cdn_ips[ip1] = 'no'
     for n in name1.split():
@@ -132,17 +149,13 @@ def publicIP(ip_addr):
 
 def printIpList(ipList):
     # Print the Header
-    print '-'*150
-    print ' p-Piracy',' ' *6, 'bytes', ' '*12, 'IP',' '*6,'<---->','    IP',' '*8,'|','        Hostname',' '*3,'<-->','Hostname',' '*30,'|', 'White-List'
-    print '-'* 150
+    print ('-'*150)
+    print (' p-Piracy',' ' *6, 'bytes', ' '*12, 'IP',' '*6,'<---->','    IP',' '*8,'|','        Hostname',' '*3,'<-->','Hostname',' '*30,'|', 'White-List')
+    print ('-'* 150)
     for ip in ipList:
         host1 = ip_host1[ip].split()
         host2 = ip_host2[ip].split()
-        print "{: <16}{: <16}{: <2}<--> {: <16} | {: <30} <--> {: <30} | {: <10}".format(p_piracy[ip], bytesout[ip], ip, saddr_d[ip], host1[0], host2[0],cdn_ips[ip])
-
-
-
-######
+        print ("{: <16}{: <16}{: <2}<--> {: <16} | {: <30} <--> {: <30} | {: <10}".format(p_piracy[ip], bytesout[ip], ip, saddr_d[ip], host1[0], host2[0],cdn_ips[ip]))
 
 
 
@@ -163,14 +176,14 @@ def main(argv):
 
     inputfile = ''
     try:
-        opts, args=getopt.getopt(argv,"hi:o:",["help","ifile=","output="])
+        opts, args=getopt.getopt(argv,"hi:o:w:",["help","ifile=","output=","whitelist="])
     except getopt.GetoptError:
         print("dashboard-post-procss.py -i <inputfile> -o [Y/N]")
         sys.exit(2)
 
     for opt, arg in opts:
         if opt == '-h':
-            print('usage: dashboard-post-process -i <inputfile> -o [Y/N]')
+            print('usage: dashboard-post-process -i <inputfile> -o [Y/N] -w <whitelist>')
             sys.exit()
         if opt in ("-i", "--ifile"):
             inputfile = arg
@@ -179,7 +192,11 @@ def main(argv):
                 dashboard_f = True
             else:
                 dashboard_f = False
+        if opt in ("-w", "--whitelist"):
+            whitelist_file = arg
 
+    #Populate whitelist
+    readWhitelist((whitelist_file))
 
     # print ("Inputfile is:", inputfile)
     fname = inputfile
@@ -188,64 +205,61 @@ def main(argv):
         for line in f:
             #line = f.readline()
 # {"time_start": 1525190870.073982, "bytes_out": 600, "sp": 67, "da": "192.168.8.115", "dp": 68, "p_piracy": 0.463818, "sa": "192.168.8.1", "num_pkts_out": 2}
-        #    content = [x.strip() for x in content]
+
             try:
-            	fields = line.split(",")
+                fields = line.split(",")
 
-            	st_str = fields[0] # Get time_start
-            	st_str2 = st_str.split(":")
-            	time_start = st_str2[1]
+                st_str = fields[0] # Get time_start
+                st_str2 = st_str.split(":")
+                time_start = st_str2[1]
 
-            	bytes_str = fields[1] # Get bytes_out
-            	bytes_str2 = bytes_str.split(":")
-            	bytes_str3 = bytes_str2[1]
-            	#bytes_str4 = bytes_str3.split('"')
-            	bytes_out = bytes_str2[1]
+                bytes_str = fields[1] # Get bytes_out
+                bytes_str2 = bytes_str.split(":")
+                bytes_str3 = bytes_str2[1]
+                #bytes_str4 = bytes_str3.split('"')
+                bytes_out = bytes_str2[1]
 
-            	pkts_str = fields[7] # get num_pkts_out
-            	pkts_str2 = pkts_str.split(":")
-            	pkts_str3 = pkts_str2[1]
-            	pkts_str4 = pkts_str3.split("}")
-            	num_pkts_out = pkts_str4[0]
+                pkts_str = fields[7] # get num_pkts_out
+                pkts_str2 = pkts_str.split(":")
+                pkts_str3 = pkts_str2[1]
+                pkts_str4 = pkts_str3.split("}")
+                num_pkts_out = pkts_str4[0]
 
-            	sa_string = fields[6] # Get the source address
-            	sa_string2 = sa_string.split(":")
-            	sa_string3 = sa_string2[1]
-            	sa_string4 = sa_string3.split('"')
-            	saddr = sa_string4[1]
+                sa_string = fields[6] # Get the source address
+                sa_string2 = sa_string.split(":")
+                sa_string3 = sa_string2[1]
+                sa_string4 = sa_string3.split('"')
+                saddr = sa_string4[1]
 
-            	da_string = fields[3] # Get the DA
-            	da_string = da_string.split(":")
-            	da_string2 = da_string[1]
-            	da_string3 = da_string2.split('"')
-            	daddr = da_string3[1]
+                da_string = fields[3] # Get the DA
+                da_string = da_string.split(":")
+                da_string2 = da_string[1]
+                da_string3 = da_string2.split('"')
+                daddr = da_string3[1]
 
-            	ip1 = saddr
-            	ip2 = daddr
+                ip1 = saddr
+                ip2 = daddr
 
-            	probstring = fields[4]
-            	prob2 = probstring.split(":")
-            	prob3 = prob2[1]
-            	prob4 = prob3.split('}')
-            	prob = prob4[0]
+                probstring = fields[4]
+                prob2 = probstring.split(":")
+                prob3 = prob2[1]
+                prob4 = prob3.split('}')
+                prob = prob4[0]
 
-            	# Now check to see if the IPs are in the list
-            	if ip_list.count(ip1) == 0 :
-                	addToList(ip1, ip2, prob, bytes_out, num_pkts_out)
-            	elif ip_list.count(ip2) == 0 :
-                	addToList(ip2,ip1, prob, bytes_out, num_pkts_out)
-            	else:
-                	# we already know of these IPs, maybe we average the probability?
-                	pass
+                # Now check to see if the IPs are in the list
+                if ip_list.count(ip1) == 0 :
+                    addToList(ip1, ip2, prob, bytes_out, num_pkts_out)
+                elif ip_list.count(ip2) == 0 :
+                    addToList(ip2,ip1, prob, bytes_out, num_pkts_out)
+                else:
+                    # we already know of these IPs, maybe we average the probability?
+                    pass
             except:
-		print ("Exception processing ", line)
+                print ("Exception processing ", line)
 
         printIpList(ip_list)
 
-#        for ip in ip_list:
-#            print ("P_piracy: %s | IP: %s <--> %s Hosts: %s <-> %s " % (p_piracy[ip],ip,saddr_d[ip],ip_host1[ip], ip_host2[ip] ))
 
-        #pprint(ip_dict)
 
 
 if __name__ == "__main__":
