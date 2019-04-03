@@ -1,5 +1,15 @@
 # PirateFinder
 
-Docker build and deployment files for PirateFinder.  PirateFinder is a video piracy detection system based up on the Cisco/Joy machine learning system.  
+` PIRATE FINDER `
 
-See the Wiki page for further instructions
+## Overview
+PirateFinder is set of tools that build upon the Joy (https://github.com/cisco/joy/blob/master/README.md)  software package for extracting data features from live network traffic or packet capture files (pcap) files, using a flow-oriented model similar to that of IPFIX or NetFlow, and then using these data features with analysis tools to detect and identify pirated video flows.
+
+The classifiers included here for detecting video piracy are sample classifiers. 
+
+PirateFinder is alpha/beta software and is not suitable for production use.
+
+
+## Quick Start
+Go to the Wiki for a guide on building:
+[Build Instructions] (https://github.com/mjtooley/PirateFinder/wiki/Building-and-Installing
