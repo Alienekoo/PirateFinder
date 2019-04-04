@@ -11,9 +11,10 @@ python analysis/model.py -m -l -t -d -p ./piracy_train/ -n ./benign_train/ -o /h
 #echo "copying classifiers to their dir"
 #cp params.txt ./classifiers/params.txt
 #cp params_bd.txt ./classifiers/params_bd.txt
-echo "Testing with new classifier"
-#./offline.sh /home/ncta/ncta_split_00001_20190305125812.pcap .95
 echo "Testing against benign data"
 ./offline.sh /home/ncta/pcap_repository/benign_library/benign3.pcap 0
 echo "Testing against pirate data"
-./offline.sh /home/ncta/pcap_repository/piracy_library/excursion1.pcap 0
+./offline.sh /home/ncta/pcap_repository/vaderstestfile.pcap 0
+echo "Testing with against NCTA test data"
+./offline.sh /home/ncta/ncta_split_00001_20190305125812.pcap .95
+
