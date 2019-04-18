@@ -32,6 +32,7 @@ from IPy import IP
 import time
 from cymruwhois import Client
 import os
+import csv
 
 
 CARBON_SERVER = "127.0.0.1"
@@ -147,6 +148,24 @@ def publicIP(ip_addr):
     else:
         return True
 
+
+def gen_csv(csv_file, ipList):
+
+    with open(csv_file, mode='a') as dashboard_file:
+        dash_writer = csv.writer(dashboard_file, delimiter=',', quotechar='"')
+
+        for ip in ipList:
+            host1 = ip_host1[ip].split()
+            host2 = ip_host2[ip][ip].split()
+            row = [p_piracy[ip], bytesout[ip], ip, saddr_d[ip], host1[0], host2[0], cdn_ips[ip]]
+            print (row)
+            dash_writer.writerow(row)
+    dashboard_file.close()
+
+def init_csv(csv_file):
+    open(csv_file, mode='w')
+
+
 def printIpList(ipList):
     # Print the Header
     print ('-'*150)
@@ -195,7 +214,11 @@ def main(argv):
         if opt in ("-w", "--whitelist"):
             whitelist_file = arg
 
-    #Populate whitelist
+    csv_filename = 'results.csv'
+    # open the csv file
+    init_csv(csv_filename)
+
+    # Populate whitelist
     readWhitelist((whitelist_file))
 
     # print ("Inputfile is:", inputfile)
@@ -258,6 +281,7 @@ def main(argv):
                 print ("Exception processing ", line)
 
         printIpList(ip_list)
+        gen_csv(csv_filename, ip_list)
 
 
 
