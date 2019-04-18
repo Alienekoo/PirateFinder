@@ -156,9 +156,9 @@ def gen_csv(csv_file, ipList):
 
         for ip in ipList:
             host1 = ip_host1[ip].split()
-            host2 = ip_host2[ip][ip].split()
+            host2 = ip_host2[ip].split()
             row = [p_piracy[ip], bytesout[ip], ip, saddr_d[ip], host1[0], host2[0], cdn_ips[ip]]
-            print (row)
+            # print (row)
             dash_writer.writerow(row)
     dashboard_file.close()
 
@@ -216,7 +216,7 @@ def main(argv):
 
     csv_filename = 'results.csv'
     # open the csv file
-    init_csv(csv_filename)
+    # init_csv(csv_filename)
 
     # Populate whitelist
     readWhitelist((whitelist_file))
