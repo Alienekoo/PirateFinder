@@ -211,11 +211,10 @@ def is_empty(any):
 def save_to_mongo2(flow):
     try:
         client = MongoClient(atlas_connection)
-        db = client.flowDB
+        db = client.flowDB2
     except Exception as e:
         print(e)
         sys.exit(1)
-
 
     try:
         dbResult = db.flows2.insert_one(flow)
