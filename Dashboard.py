@@ -156,7 +156,7 @@ def addToGrafana(ts, ip1, ip2, prob, bytes_out, pkts_out):
     dest = name1.replace(".","-") # replace dots with dashes
     dest = dest.replace(" ","") # remove whitespace
     dest = dest.replace(",","-")
-#     ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
+#    ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
     if (float(prob) > 0.8):
         message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
         sock.sendall(message)
@@ -378,6 +378,7 @@ def main(argv):
         if not db_initialized:
             initMongodb()
 
+    ts = int(time.time())  # Get Time stamp in seconds
     # print ("Inputfile is:", inputfile)
     fname = inputfile
     # open the file
@@ -443,7 +444,7 @@ def main(argv):
                 save_to_mongo(flow)
 
             if grafana:
-                addToGrafana(time_start,saddr, daddr,float(prob), int(bytes_out), int(num_pkts_out))
+                addToGrafana(ts,saddr, daddr,float(prob), int(bytes_out), int(num_pkts_out))
 
         printIpList(ip_list)
         gen_csv(csv_filename, ip_list)
