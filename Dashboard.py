@@ -244,6 +244,7 @@ def save_to_mongo(flow):
         flow['count'] = 1 # Init the count
         flow['mean_piracy'] = float(flow['p_piracy'])
         flow['max_piracy'] = float(flow['p_piracy'])
+        flow['score'] = flow['bytesoute']*flow['p_piracy']
         try:
             dbResult = db.flows.insert_one(flow)
             return True
@@ -257,18 +258,26 @@ def save_to_mongo(flow):
 #        flow['num_pkts'] =  int(r['num_pkts'])+int(flow['num_pkts'])
 #        flow['p_piracy'] = float(r['p_piracy'])+float(flow['p_piracy'])
 #        flow['mean_piracy'] = float(float(flow['p_piracy']) / flow['count'])
+        count = r['count']+1
+        bytes_out = int(r['bytesout'])+int(flow['bytesout'])
+        pkts = int(r['num_pkts'])+int(flow['num_pkts'])
+        piracy = float(r['p_piracy'])+float(flow['p_piracy'])
+        mean_piracy = float(float(flow['p_piracy']) / (r['count']+1))
         if flow['p_piracy'] > r['max_piracy']:
             max_piracy = flow['p_piracy']
         else:
             max_piracy = r['max_piracy']
 
+        piracy_score = bytes_out*mean_piracy
+
         update = {
-            'count': r['count']+1,
-            'bytesout' : int(r['bytesout'])+int(flow['bytesout']),
-            'num_pkts' : int(r['num_pkts'])+int(flow['num_pkts']),
-            'p_piracy': float(r['p_piracy'])+float(flow['p_piracy']),
-            'mean_piracy' : float(float(flow['p_piracy']) / (r['count']+1)),
-            'max_piracy': max_piracy
+            'count': count,
+            'bytesout' : bytes_out,
+            'num_pkts' : pkts,
+            'p_piracy': piracy,
+            'mean_piracy' : mean_piracy,
+            'max_piracy': max_piracy,
+            'score': piracy_score
         }
 
         try:
