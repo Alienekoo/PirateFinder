@@ -33,6 +33,9 @@ import time
 from cymruwhois import Client
 import os
 import csv
+from pymongo import MongoClient
+import logging
+
 
 
 CARBON_SERVER = "127.0.0.1"
@@ -178,6 +181,125 @@ def printIpList(ipList):
 
 
 
+# Python 2.7
+atlas_connection = "mongodb://pymongo:ncta1234@testcluster0-shard-00-00-e9cwj.mongodb.net:27017,testcluster0-shard-00-01-e9cwj.mongodb.net:27017,testcluster0-shard-00-02-e9cwj.mongodb.net:27017/test?ssl=true&replicaSet=testCluster0-shard-0&authSource=admin&retryWrites=true"
+
+# Python 3.6
+#atlas_connection = "mongodb+srv://pymongo:ncta1234@testcluster0-e9cwj.mongodb.net/test?retryWrites=true"
+
+
+def is_empty(any):
+    if any:
+        return False
+    else:
+        return True
+
+def save_to_mongo2(flow):
+    try:
+        client = MongoClient(atlas_connection)
+        db = client.flowDB
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+
+    try:
+        dbResult = db.flows2.insert_one(flow)
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+
+def save_to_mongo(flow):
+    try:
+        client = MongoClient(atlas_connection)
+        db = client.flowDB
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+    # See if the flow already exists
+    try:
+        r = db.flows.find_one({'dest_IP':flow['dest_IP']})
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+    if is_empty(r):
+        # Save flow to DB
+        flow['count'] = 1 # Init the count
+        flow['mean_piracy'] = float(flow['p_piracy'])
+        flow['max_piracy'] = float(flow['p_piracy'])
+        try:
+            dbResult = db.flows.insert_one(flow)
+            return True
+        except Exception as e:
+            print(e)
+            return False
+    else:
+        r = db.flows.find_one({'dest_IP': flow['dest_IP']})
+#        flow['count'] = r['count']+1
+#        flow['bytesout'] = int(r['bytesout'])+int(flow['bytesout'])
+#        flow['num_pkts'] =  int(r['num_pkts'])+int(flow['num_pkts'])
+#        flow['p_piracy'] = float(r['p_piracy'])+float(flow['p_piracy'])
+#        flow['mean_piracy'] = float(float(flow['p_piracy']) / flow['count'])
+        if flow['p_piracy'] > r['max_piracy']:
+            max_piracy = flow['p_piracy']
+        else:
+            max_piracy = r['max_piracy']
+
+        update = {
+            'count': r['count']+1,
+            'bytesout' : int(r['bytesout'])+int(flow['bytesout']),
+            'num_pkts' : int(r['num_pkts'])+int(flow['num_pkts']),
+            'p_piracy': float(r['p_piracy'])+float(flow['p_piracy']),
+            'mean_piracy' : float(float(flow['p_piracy']) / (r['count']+1)),
+            'max_piracy': max_piracy
+        }
+
+        try:
+            dbResult = db.flows.update_one(
+                                           {'dest_IP': flow['dest_IP']},
+                                           {
+                                               '$set':update
+                                           }
+                        )
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+#  flow = {'time_start':time_start, 'source_IP':saddr,'dest_IP':daddr,'bytesout':bytes_out, 'num_pkts':num_pkts_out, 'p_piracy':prob}
+
+db_initialized = False
+
+
+def initMongodb():
+    try:
+        client = MongoClient(atlas_connection)
+        db = client.flowDB
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+    db_collections = db.collection_names()
+    if 'flows' not in db_collections:
+        db.create_collection('flows', capped=True, size=5000000, max=1000000)
+
+    r = db.command('collstats','flows')
+    if 'capped' not in r:
+        db.command('convertToCapped', 'results',size=5000000, max=1000000)
+
+    try:
+        r= db.flows.create_index([('dest_IP',1)],unique = True)
+    except Exception as e:
+        print(e)
+        pass
+
+    db_initialized = True
+
+
 ip_list = []
 ip_dict = {}
 ip_host1 = {}
@@ -194,10 +316,11 @@ dbase_name = 'pirates'
 def main(argv):
 
     inputfile = ''
+    mongo_uri = ''
     try:
-        opts, args=getopt.getopt(argv,"hi:o:w:",["help","ifile=","output=","whitelist="])
+        opts, args=getopt.getopt(argv,"hi:o:w:m:",["help","ifile=","output=","whitelist=","mongodb="])
     except getopt.GetoptError:
-        print("dashboard-post-procss.py -i <inputfile> -o [Y/N]")
+        print("dashboard-post-procss.py -i <inputfile> -o [Y/N] -w <whitelist> -m <mongo URI>")
         sys.exit(2)
 
     for opt, arg in opts:
@@ -213,6 +336,8 @@ def main(argv):
                 dashboard_f = False
         if opt in ("-w", "--whitelist"):
             whitelist_file = arg
+        if opt in ("-m", "--mongodb"):
+            mongo_uri = arg
 
     csv_filename = 'results.csv'
     # open the csv file
@@ -220,6 +345,10 @@ def main(argv):
 
     # Populate whitelist
     readWhitelist((whitelist_file))
+
+    if mongo_uri:
+        if not db_initialized:
+            initMongodb()
 
     # print ("Inputfile is:", inputfile)
     fname = inputfile
@@ -279,6 +408,11 @@ def main(argv):
                     pass
             except:
                 print ("Exception processing ", line)
+
+            if mongo_uri :
+                flow = {'time_start':time_start, 'source_IP':saddr,'dest_IP':daddr,'bytesout':int(bytes_out), 'num_pkts':int(num_pkts_out), 'p_piracy':float(prob)}
+                save_to_mongo2(flow)
+                save_to_mongo(flow)
 
         printIpList(ip_list)
         gen_csv(csv_filename, ip_list)
