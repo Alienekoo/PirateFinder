@@ -244,7 +244,7 @@ def save_to_mongo(flow):
         flow['count'] = 1 # Init the count
         flow['mean_piracy'] = float(flow['p_piracy'])
         flow['max_piracy'] = float(flow['p_piracy'])
-        flow['score'] = flow['bytesoute']*flow['p_piracy']
+        flow['score'] = flow['bytesout']*flow['p_piracy']
         try:
             dbResult = db.flows.insert_one(flow)
             return True
