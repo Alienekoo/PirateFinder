@@ -41,6 +41,20 @@ import logging
 CARBON_SERVER = "127.0.0.1"
 CARBON_PORT = 2003
 
+ip_list = []
+ip_dict = {}
+ip_host1 = {}
+ip_host2 = {}
+p_piracy = {}
+bytesout = {}
+saddr_d = {}
+cdn_ips = {}
+flow_cnt = {}
+
+
+dbase_name = 'pirates'
+dashboard_f = False
+
 #whitelist = {'AKAMAI', 'akamai', 'Google', 'MSFT', 'AMAZON-AES', 'CMCS',
 #             'MICROSOFT-CORP-MSN-AS-BLOCK'}
 
@@ -70,7 +84,7 @@ def tryWhoIs(ip_addr):
     return name
 
 
-def addToList(ip1, ip2, prob, bytes_out, pkts_out):
+def addToList(ip1, ip2, prob, bytes_out, pkts_out, grafana):
     ip_list.append(ip1)
 
     try:
@@ -109,7 +123,7 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out):
             cdn_ips[ip1] = 'yes'
 
 
-    if dashboard_f == True:
+    if grafana == True:
         # Add it to the Graphite DB for Grafana
         sock = socket()
         try:
@@ -300,18 +314,7 @@ def initMongodb():
     db_initialized = True
 
 
-ip_list = []
-ip_dict = {}
-ip_host1 = {}
-ip_host2 = {}
-p_piracy = {}
-bytesout = {}
-saddr_d = {}
-cdn_ips = {}
-flow_cnt = {}
-dashboard_f = False
 
-dbase_name = 'pirates'
 
 def main(argv):
 
@@ -400,9 +403,9 @@ def main(argv):
 
                 # Now check to see if the IPs are in the list
                 if ip_list.count(ip1) == 0 :
-                    addToList(ip1, ip2, prob, bytes_out, num_pkts_out)
+                    addToList(ip1, ip2, prob, bytes_out, num_pkts_out, dashboard_f)
                 elif ip_list.count(ip2) == 0 :
-                    addToList(ip2,ip1, prob, bytes_out, num_pkts_out)
+                    addToList(ip2,ip1, prob, bytes_out, num_pkts_out, dashboard_f)
                 else:
                     # we already know of these IPs, maybe we average the probability?
                     pass
