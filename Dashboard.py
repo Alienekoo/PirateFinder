@@ -47,6 +47,7 @@ ip_host1 = {}
 ip_host2 = {}
 p_piracy = {}
 bytesout = {}
+pktsout = {}
 saddr_d = {}
 cdn_ips = {}
 flow_cnt = {}
@@ -54,6 +55,8 @@ flow_cnt = {}
 
 dbase_name = 'pirates'
 dashboard_f = False
+grafana = True
+
 
 #whitelist = {'AKAMAI', 'akamai', 'Google', 'MSFT', 'AMAZON-AES', 'CMCS',
 #             'MICROSOFT-CORP-MSN-AS-BLOCK'}
@@ -111,7 +114,7 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out, grafana):
     p_piracy[ip1] = prob
     saddr_d[ip1] = ip2
     bytesout[ip1] = bytes_out
-
+    pktsout[ip1] = pkts_out
 
     # Check to see if it is in the list of known cdns and public hosts
     cdn_ips[ip1] = 'no'
@@ -123,39 +126,56 @@ def addToList(ip1, ip2, prob, bytes_out, pkts_out, grafana):
             cdn_ips[ip1] = 'yes'
 
 
-    if grafana == True:
-        # Add it to the Graphite DB for Grafana
-        sock = socket()
-        try:
-            sock.connect( (CARBON_SERVER, CARBON_PORT))
-        except:
-            print ("Could NOT connect to Carbon, is Carbon running?")
-            sys.exit(1)
-
-        dest = name1.replace(".","-") # replace dots with dashes
-        dest = dest.replace(" ","") # remove whitespace
-        dest = dest.replace(",","-")
-        ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
-        if (float(prob) > 0.8):
-            message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
-            sock.sendall(message)
-            message = "dashboard.piracy." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
-            sock.sendall(message)
-            message = "dashboard.piracy." + dest + ".probability" + " "  + str(prob) + " " + str(ts) + "\n"
-            sock.sendall(message)
+def addToGrafana(ip1, ip2, prob, bytes_out, pkts_out):
+    try:
+        result = socket.gethostbyaddr(ip1)
+        name1 = result[0]
+    except:
+        ip = IP(ip1)
+        if ip.iptype() == 'PRIVATE':
+            name1 = "private"
         else:
-            message = "dashboard.web." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
-            sock.sendall(message)
-            message = "dashboard.web." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
-            sock.sendall(message)
-            message = "dashboard.web." + dest + ".probability" + " " + str(prob) + " " + str(ts) + "\n"
-            sock.sendall(message)
+            name1 = tryWhoIs(ip1)
+    try:
+        result = socket.gethostbyaddr(ip2)
+        name2 = result[0]
+    except:
+        ip = IP(ip2)
+        if ip.iptype() == 'PRIVATE':
+            name2 = "private"
+        else:
+            name2 = tryWhoIs(ip2)
 
+    sock = socket()
+    try:
+        sock.connect( (CARBON_SERVER, CARBON_PORT))
+    except:
+        print ("Could NOT connect to Carbon, is Carbon running?")
+        sys.exit(1)
 
-        message = "dashboard.hosts." + dest + " " + str(prob) + " " + str(ts) + "\n"
+    dest = name1.replace(".","-") # replace dots with dashes
+    dest = dest.replace(" ","") # remove whitespace
+    dest = dest.replace(",","-")
+    ts = int(time.time()) # Get Time stamp in seconds, TODO Use flow start time from NF
+    if (float(prob) > 0.8):
+        message = "dashboard.piracy." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
+        sock.sendall(message)
+        message = "dashboard.piracy." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
+        sock.sendall(message)
+        message = "dashboard.piracy." + dest + ".probability" + " "  + str(prob) + " " + str(ts) + "\n"
+        sock.sendall(message)
+    else:
+        message = "dashboard.web." + dest + ".bytes" + " " + str(bytes_out) + " " + str(ts) + "\n"
+        sock.sendall(message)
+        message = "dashboard.web." + dest + ".packets" + " " + str(pkts_out) + " " + str(ts) + "\n"
+        sock.sendall(message)
+        message = "dashboard.web." + dest + ".probability" + " " + str(prob) + " " + str(ts) + "\n"
         sock.sendall(message)
 
-        sock.close()
+    message = "dashboard.hosts." + dest + " " + str(prob) + " " + str(ts) + "\n"
+    sock.sendall(message)
+
+    sock.close()
 
 
 def publicIP(ip_addr):
@@ -164,7 +184,6 @@ def publicIP(ip_addr):
         return False
     else:
         return True
-
 
 def gen_csv(csv_file, ipList):
 
@@ -181,7 +200,6 @@ def gen_csv(csv_file, ipList):
 
 def init_csv(csv_file):
     open(csv_file, mode='w')
-
 
 def printIpList(ipList):
     # Print the Header
@@ -279,7 +297,6 @@ def save_to_mongo(flow):
             'max_piracy': max_piracy,
             'score': piracy_score
         }
-
         try:
             dbResult = db.flows.update_one(
                                            {'dest_IP': flow['dest_IP']},
@@ -424,6 +441,9 @@ def main(argv):
                 flow = {'time_start':time_start, 'source_IP':saddr,'dest_IP':daddr,'bytesout':int(bytes_out), 'num_pkts':int(num_pkts_out), 'p_piracy':float(prob)}
                 save_to_mongo2(flow)
                 save_to_mongo(flow)
+
+            if grafana:
+                addToGrafana(saddr, daddr,float(prob), int(bytes_out), int(num_pkts_out))
 
         printIpList(ip_list)
         gen_csv(csv_filename, ip_list)
