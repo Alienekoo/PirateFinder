@@ -348,6 +348,7 @@ def main(argv):
     mongo_uri = atlas_connection
     whitelist_file = "whitelist.txt"
 
+    logging.basicConfig()
     logger = logging.getLogger('piratefinder')
 
     try:
