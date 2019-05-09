@@ -384,6 +384,8 @@ def main(argv):
     ts = int(time.time())  # Get Time stamp in seconds
 
     line_count = 0
+    lines_processed = 0
+    lines_notprocessed = 0
 
     # Read and process one line at time from stdin
     for line in sys.stdin:
@@ -397,14 +399,18 @@ def main(argv):
             try:
                 j = json.loads(aline)
                 save_to_mongo2(j)
+                lines_processed += 1
             except Exception as e:
                 logger.error(str(e))
+                lines_notprocessed += 1
                 pass # keep going
 
             if line_count % 1000 == 0:
                 print "lines processed:", line_count
 
-    print "Lines processed:", line_count
+    print "Lines:", line_count
+    print "Lines processed", lines_processed
+    print "Lines not processed", lines_notprocessed
 
 
 
