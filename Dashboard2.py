@@ -43,7 +43,6 @@ import json
 CARBON_SERVER = "127.0.0.1"
 CARBON_PORT = 2003
 
-ip_list = []
 ip_dict = {}
 ip_host1 = {}
 ip_host2 = {}
@@ -89,7 +88,7 @@ def tryWhoIs(ip_addr):
     return name
 
 
-def addToList(ip1, ip2, prob, bytes_out, pkts_out, grafana):
+def addToList(ip_list, ip1, ip2, prob, bytes_out, pkts_out, grafana):
     ip_list.append(ip1)
 
     try:
@@ -340,6 +339,7 @@ def main(argv):
     inputfile = ''
     mongo_uri = atlas_connection
     whitelist_file = "whitelist.txt"
+    ip_list = []
 
     logging.basicConfig(filename="piratefinder.log",level=logging.ERROR)
     logger = logging.getLogger('piratefinder')
@@ -399,41 +399,40 @@ def main(argv):
                 j = json.loads(aline)
                 # save_to_mongo2(j)
                 lines_processed += 1
-                #if j['p_malware'] > .7:
-                #    print "p: %s %s <--> %s  bytesout: %s" %(str(j['p_malware']),str(j['sa']), str(j['da']), str(j['bytes_out']))
+                if j['p_malware'] > .7:
 
-                # save_to_mongo(mongo_uri, j)
-                # save_to_mongo2(mong_uri,j)
+                    save_to_mongo(mongo_uri, j)
+                    save_to_mongo2(mongo_uri,j)
 
-                if ip_list.count(j['sa']) == 0 :
-                    addToList(j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
-                elif ip_list.count(j['da']) == 0 :
-                    addToList(j['da'], j['sa'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
-                else:
-                    # we already know of these IPs, maybe we average the probability?
-                    pass
+                    if ip_list.count(j['sa']) == 0 :
+                        addToList(ip_list, j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                    elif ip_list.count(j['da']) == 0 :
+                        addToList(ip_list, j['da'], j['sa'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                    else:
+                        # we already know of these IPs, maybe we average the probability?
+                        pass
 
             except Exception as e:
                 logger.error(str(e))
                 lines_notprocessed += 1
                 pass # keep going
 
-            if line_count % 100000 == 0:
+            if line_count % 10000== 0:
                 print "Lines processed", line_count
                 delta_t = time.time() - last_time
                 lines_per_sec = line_count / delta_t
                 print "Lines per second:", lines_per_sec
+                if ip_list:
+                    printIpList(ip_list)
+                    gen_csv(csv_filename, ip_list)
+                    ip_list = []
+
 
 
 
     print "Lines:", line_count
     print "Lines processed", lines_processed
     print "Lines not processed", lines_notprocessed
-
-    printIpList(ip_list)
-    gen_csv(csv_filename, ip_list)
-
-
 
 
 
