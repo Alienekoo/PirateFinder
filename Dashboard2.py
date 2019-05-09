@@ -411,8 +411,9 @@ def main(argv):
                 lines_notprocessed += 1
                 pass # keep going
 
-            if line_count % 1000 == 0:
-                print "lines processed:", line_count
+            if line_count % 10000 == 0:
+                print "Lines processed", lines_processed
+                print "Lines not processed", lines_notprocessed
 
     print "Lines:", line_count
     print "Lines processed", lines_processed
