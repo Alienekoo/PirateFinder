@@ -214,23 +214,15 @@ def printIpList(ipList):
         print ("{: <16}{: <16}{: <2}<--> {: <16} | {: <30} <--> {: <30} | {: <10}".format(p_piracy[ip], bytesout[ip], ip, saddr_d[ip], host1[0], host2[0],cdn_ips[ip]))
 
 
-
-# Python 2.7
-atlas_connection = "mongodb://pymongo:ncta1234@testcluster0-shard-00-00-e9cwj.mongodb.net:27017,testcluster0-shard-00-01-e9cwj.mongodb.net:27017,testcluster0-shard-00-02-e9cwj.mongodb.net:27017/test?ssl=true&replicaSet=testCluster0-shard-0&authSource=admin&retryWrites=true"
-
-# Python 3.6
-#atlas_connection = "mongodb+srv://pymongo:ncta1234@testcluster0-e9cwj.mongodb.net/test?retryWrites=true"
-
-
 def is_empty(any):
     if any:
         return False
     else:
         return True
 
-def save_to_mongo2(flow):
+def save_to_mongo2(uri, flow):
     try:
-        client = MongoClient(atlas_connection)
+        client = MongoClient(uri)
         db = client.flowDB2
     except Exception as e:
         print(e)
@@ -244,9 +236,9 @@ def save_to_mongo2(flow):
         return False
 
 
-def save_to_mongo(flow):
+def save_to_mongo(uri, flow):
     try:
-        client = MongoClient(atlas_connection)
+        client = MongoClient(uri)
         db = client.flowDB
     except Exception as e:
         print(e)
@@ -254,7 +246,7 @@ def save_to_mongo(flow):
 
     # See if the flow already exists
     try:
-        r = db.flows.find_one({'dest_IP':flow['dest_IP']})
+        r = db.flows.find_one({'da':flow['da']})
     except Exception as e:
         print(e)
         sys.exit(1)
@@ -262,9 +254,9 @@ def save_to_mongo(flow):
     if is_empty(r):
         # Save flow to DB
         flow['count'] = 1 # Init the count
-        flow['mean_piracy'] = float(flow['p_piracy'])
-        flow['max_piracy'] = float(flow['p_piracy'])
-        flow['score'] = flow['bytesout']*flow['p_piracy']
+        flow['mean_piracy'] = float(flow['p_malware'])
+        flow['max_piracy'] = float(flow['p_malware'])
+        flow['score'] = flow['bytes_out']*flow['p_malware']
         try:
             dbResult = db.flows.insert_one(flow)
             return True
@@ -272,19 +264,14 @@ def save_to_mongo(flow):
             print(e)
             return False
     else:
-        r = db.flows.find_one({'dest_IP': flow['dest_IP']})
-#        flow['count'] = r['count']+1
-#        flow['bytesout'] = int(r['bytesout'])+int(flow['bytesout'])
-#        flow['num_pkts'] =  int(r['num_pkts'])+int(flow['num_pkts'])
-#        flow['p_piracy'] = float(r['p_piracy'])+float(flow['p_piracy'])
-#        flow['mean_piracy'] = float(float(flow['p_piracy']) / flow['count'])
+        r = db.flows.find_one({'da': flow['da']})
         count = r['count']+1
-        bytes_out = int(r['bytesout'])+int(flow['bytesout'])
-        pkts = int(r['num_pkts'])+int(flow['num_pkts'])
-        piracy = float(r['p_piracy'])+float(flow['p_piracy'])
-        mean_piracy = float(float(flow['p_piracy']) / (r['count']+1))
-        if flow['p_piracy'] > r['max_piracy']:
-            max_piracy = flow['p_piracy']
+        bytes_out = int(r['bytes_out'])+int(flow['bytes_out'])
+        pkts = int(r['num_pkts_out'])+int(flow['num_pkts_out'])
+        piracy = float(r['p_malware'])+float(flow['p_malware'])
+        mean_piracy = float(float(flow['p_malware']) / (r['count']+1))
+        if flow['p_malware'] > r['max_piracy']:
+            max_piracy = flow['p_malware']
         else:
             max_piracy = r['max_piracy']
 
@@ -292,8 +279,8 @@ def save_to_mongo(flow):
 
         update = {
             'count': count,
-            'bytesout' : bytes_out,
-            'num_pkts' : pkts,
+            'bytes_out' : bytes_out,
+            'num_pkts_out' : pkts,
             'p_piracy': piracy,
             'mean_piracy' : mean_piracy,
             'max_piracy': max_piracy,
@@ -301,7 +288,7 @@ def save_to_mongo(flow):
         }
         try:
             dbResult = db.flows.update_one(
-                                           {'dest_IP': flow['dest_IP']},
+                                           {'da': flow['da']},
                                            {
                                                '$set':update
                                            }
@@ -326,14 +313,14 @@ def initMongodb(uri):
 
     db_collections = db.collection_names()
     if 'flows' not in db_collections:
-        db.create_collection('flows', capped=True, size=5000000, max=1000000)
+        db.create_collection('flows')
 
-    r = db.command('collstats','flows')
-    if 'capped' not in r:
-        db.command('convertToCapped', 'results',size=5000000, max=1000000)
+    #r = db.command('collstats','flows')
+    #if 'capped' not in r:
+    #    db.command('convertToCapped', 'results',size=5000000, max=1000000)
 
     try:
-        r= db.flows.create_index([('dest_IP',1)],unique = True)
+        r= db.flows.create_index([('da',1)],unique = True)
     except Exception as e:
         print(e)
         pass
@@ -341,12 +328,17 @@ def initMongodb(uri):
     db_initialized = True
 
 
+# Python 2.7
+atlas_connection = "mongodb://pymongo:ncta1234@testcluster0-shard-00-00-e9cwj.mongodb.net:27017,testcluster0-shard-00-01-e9cwj.mongodb.net:27017,testcluster0-shard-00-02-e9cwj.mongodb.net:27017/test?ssl=true&replicaSet=testCluster0-shard-0&authSource=admin&retryWrites=true"
+
+# Python 3.6
+#atlas_connection = "mongodb+srv://pymongo:ncta1234@testcluster0-e9cwj.mongodb.net/test?retryWrites=true"
 
 
 def main(argv):
 
     inputfile = ''
-    mongo_uri = "127.0.0.1"
+    mongo_uri = atlas_connection
     whitelist_file = "whitelist.txt"
 
     logging.basicConfig(filename="piratefinder.log",level=logging.ERROR)
@@ -378,7 +370,7 @@ def main(argv):
 
     csv_filename = 'results.csv'
     # open the csv file
-    # init_csv(csv_filename)
+    init_csv(csv_filename)
 
     # Populate whitelist
     readWhitelist((whitelist_file))
@@ -405,8 +397,22 @@ def main(argv):
             aline = ''.join(char for char in line if ord(char) != 45)
             try:
                 j = json.loads(aline)
-                save_to_mongo2(j)
+                # save_to_mongo2(j)
                 lines_processed += 1
+                #if j['p_malware'] > .7:
+                #    print "p: %s %s <--> %s  bytesout: %s" %(str(j['p_malware']),str(j['sa']), str(j['da']), str(j['bytes_out']))
+
+                # save_to_mongo(mongo_uri, j)
+                # save_to_mongo2(mong_uri,j)
+
+                if ip_list.count(j['sa']) == 0 :
+                    addToList(j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                elif ip_list.count(j['da']) == 0 :
+                    addToList(j['da'], j['sa'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                else:
+                    # we already know of these IPs, maybe we average the probability?
+                    pass
+
             except Exception as e:
                 logger.error(str(e))
                 lines_notprocessed += 1
@@ -418,9 +424,14 @@ def main(argv):
                 lines_per_sec = line_count / delta_t
                 print "Lines per second:", lines_per_sec
 
+
+
     print "Lines:", line_count
     print "Lines processed", lines_processed
     print "Lines not processed", lines_notprocessed
+
+    printIpList(ip_list)
+    gen_csv(csv_filename, ip_list)
 
 
 
