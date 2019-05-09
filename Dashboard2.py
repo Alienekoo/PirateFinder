@@ -35,6 +35,7 @@ import os
 import csv
 from pymongo import MongoClient
 import logging
+from logging.config import fileConfig
 import json
 
 
@@ -348,9 +349,13 @@ def main(argv):
     mongo_uri = atlas_connection
     whitelist_file = "whitelist.txt"
 
-    logging.basicConfig()
-    logger = logging.getLogger('piratefinder')
 
+    logger = logging.getLogger('piratefinder')
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    handler.setFormatter((formatter))
+    logger.addHandler((handler))
+    logger.setLevel(logging.ERROR)
     try:
         opts, args=getopt.getopt(argv,"ho:w:m:",["help","output=","whitelist=","mongodb="])
     except getopt.GetoptError:
