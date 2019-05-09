@@ -87,6 +87,18 @@ def tryWhoIs(ip_addr):
 
     return name
 
+def get_host_name(ip):
+    try:
+        result = socket.gethostbyaddr(ip)
+        name = result[0]
+    except:
+        ip = IP(ip)
+        if ip.iptype() == 'PRIVATE':
+            name = "private"
+        else:
+            name = tryWhoIs(ip)
+    return name
+
 
 def addToList(ip_list, ip1, ip2, prob, bytes_out, pkts_out, grafana):
     ip_list.append(ip1)
@@ -256,6 +268,16 @@ def save_to_mongo(uri, flow):
         flow['mean_piracy'] = float(flow['p_malware'])
         flow['max_piracy'] = float(flow['p_malware'])
         flow['score'] = flow['bytes_out']*flow['p_malware']
+
+        ip = flow['sa']
+
+        host1 = get_host_name(ip)
+        ip = flow['da']
+        host2 = get_host_name(ip)
+
+        flow['host1'] = host1
+        flow['host2'] = host2
+
         try:
             dbResult = db.flows.insert_one(flow)
             return True
