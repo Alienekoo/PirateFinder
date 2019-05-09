@@ -347,6 +347,9 @@ def main(argv):
     inputfile = ''
     mongo_uri = atlas_connection
     whitelist_file = "whitelist.txt"
+
+    logger = logging.getLogger('piratefinder')
+
     try:
         opts, args=getopt.getopt(argv,"ho:w:m:",["help","output=","whitelist=","mongodb="])
     except getopt.GetoptError:
@@ -395,8 +398,11 @@ def main(argv):
                 j = json.loads(aline)
                 save_to_mongo2(j)
             except Exception as e:
-                print(e)
+                logger.error(str(e))
                 pass # keep going
+
+            if line_count % 1000 == 0:
+                print "lines processed:", line_count
 
     print "Lines processed:", line_count
 
