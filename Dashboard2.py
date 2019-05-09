@@ -316,9 +316,9 @@ def save_to_mongo(flow):
 db_initialized = False
 
 
-def initMongodb():
+def initMongodb(uri):
     try:
-        client = MongoClient(atlas_connection)
+        client = MongoClient(uri)
         db = client.flowDB
     except Exception as e:
         print(e)
@@ -346,7 +346,7 @@ def initMongodb():
 def main(argv):
 
     inputfile = ''
-    mongo_uri = atlas_connection
+    mongo_uri = "127.0.0.1"
     whitelist_file = "whitelist.txt"
 
     logging.basicConfig(filename="piratefinder.log",level=logging.ERROR)
@@ -385,7 +385,7 @@ def main(argv):
 
     if mongo_uri:
         if not db_initialized:
-            initMongodb()
+            initMongodb(mongo_uri)
 
     ts = int(time.time())  # Get Time stamp in seconds
 
@@ -394,6 +394,7 @@ def main(argv):
     lines_notprocessed = 0
 
     # Read and process one line at time from stdin
+    last_time = time.time()
     for line in sys.stdin:
 # {"time_start": 1525190870.073982, "bytes_out": 600, "sp": 67, "da": "192.168.8.115", "dp": 68, "p_piracy": 0.463818, "sa": "192.168.8.1", "num_pkts_out": 2}
         if "version" in line:
@@ -411,9 +412,11 @@ def main(argv):
                 lines_notprocessed += 1
                 pass # keep going
 
-            if line_count % 10000 == 0:
-                print "Lines processed", lines_processed
-                print "Lines not processed", lines_notprocessed
+            if line_count % 100000 == 0:
+                print "Lines processed", line_count
+                delta_t = time.time() - last_time
+                lines_per_sec = line_count / delta_t
+                print "Lines per second:", lines_per_sec
 
     print "Lines:", line_count
     print "Lines processed", lines_processed
