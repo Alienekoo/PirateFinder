@@ -476,7 +476,7 @@ def main(argv):
     print "Lines not processed", lines_notprocessed
     print "Lines per second:", lines_per_sec
     if ip_list:
-        printIpList()
+        printIpList(ip_list)
         gen_csv(csv_filename,ip_list)
 
 
