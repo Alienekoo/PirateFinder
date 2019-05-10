@@ -455,22 +455,28 @@ def main(argv):
                 lines_notprocessed += 1
                 pass # keep going
 
-            if line_count % 10000== 0:
-                print "Lines processed", line_count
-                delta_t = time.time() - last_time
-                lines_per_sec = line_count / delta_t
-                print "Lines per second:", lines_per_sec
-                if ip_list:
-                    printIpList(ip_list)
-                    gen_csv(csv_filename, ip_list)
-                    ip_list = []
+#            if line_count % 10000== 0:
+#                print "Lines processed", line_count
+#                delta_t = time.time() - last_time
+#                lines_per_sec = line_count / delta_t
+#                print "Lines per second:", lines_per_sec
+#                if ip_list:
+#                    printIpList(ip_list)
+#                    gen_csv(csv_filename, ip_list)
+#                    ip_list = []
 
-
-
-
+    delta_t = time.time() - last_time
+    lines_per_sec = line_count / delta_t
+    print "-- Finished ---"
     print "Lines:", line_count
     print "Lines processed", lines_processed
     print "Lines not processed", lines_notprocessed
+    print "Lines per second:", lines_per_sec
+    if ip_list:
+        printIpList()
+        gen_csv(csv_filename,ip_list)
+
+
 
 
 
