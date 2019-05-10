@@ -436,9 +436,9 @@ def main(argv):
 
                 if j['p_malware'] > .7:
 
-                    ip = j['sa']
-                    host1 = get_host_name(ip) # Check to see if the ASN is on the white list
-                    if not whitelisted(host1):
+                    source = get_host_name(j['sa']) # Check to see if the ASN is on the white list
+                    destination = get_host_name(j['da'])
+                    if not whitelisted(source) and not whitelisted(destination):
                         save_to_mongo(mongo_uri, j)
                         save_to_mongo2(mongo_uri,j)
 
