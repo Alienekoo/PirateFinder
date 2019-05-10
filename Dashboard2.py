@@ -72,8 +72,15 @@ def readWhitelist(filename):
         line = fp.readline()
         while line:
             # add to whitelist
-            whitelist.append(line.rstrip())
+            whitelist.append(line.rstrip().lower())
             line = fp.readline()
+
+def whitelisted(asn):
+    for n in asn.split():
+        if n.lower() in whitelist:
+            return True
+        else:
+            return False
 
 
 def tryWhoIs(ip_addr):
@@ -87,7 +94,11 @@ def tryWhoIs(ip_addr):
 
     return name
 
+hosts = {}
 def get_host_name(ip):
+    if ip in hosts:
+        return hosts[ip]
+
     try:
         result = socket.gethostbyaddr(ip)
         name = result[0]
@@ -97,6 +108,7 @@ def get_host_name(ip):
             name = "private"
         else:
             name = tryWhoIs(ip)
+    hosts[ip] = name
     return name
 
 
@@ -421,18 +433,22 @@ def main(argv):
                 j = json.loads(aline)
                 # save_to_mongo2(j)
                 lines_processed += 1
+
                 if j['p_malware'] > .7:
 
-                    save_to_mongo(mongo_uri, j)
-                    save_to_mongo2(mongo_uri,j)
+                    ip = j['sa']
+                    host1 = get_host_name(ip) # Check to see if the ASN is on the white list
+                    if not whitelisted(host1):
+                        save_to_mongo(mongo_uri, j)
+                        save_to_mongo2(mongo_uri,j)
 
-                    if ip_list.count(j['sa']) == 0 :
-                        addToList(ip_list, j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
-                    elif ip_list.count(j['da']) == 0 :
-                        addToList(ip_list, j['da'], j['sa'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
-                    else:
-                        # we already know of these IPs, maybe we average the probability?
-                        pass
+                        if ip_list.count(j['sa']) == 0 :
+                            addToList(ip_list, j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                        elif ip_list.count(j['da']) == 0 :
+                            addToList(ip_list, j['da'], j['sa'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                        else:
+                            # we already know of these IPs, maybe we average the probability?
+                            pass
 
             except Exception as e:
                 logger.error(str(e))

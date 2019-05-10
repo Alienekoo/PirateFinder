@@ -1,7 +1,15 @@
-AKAMAI
 akamai
-Google
+google
 MSFT
 AMAZON-AES
 CMCS
 MICROSOFT-CORP-MSN-AS-BLOCK
+ATT-CERFNET-BLOCK
+comcast
+comcast-7922
+charter
+amazon-02
+att-internet4
+level3
+microsoft
+opendns
