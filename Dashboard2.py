@@ -409,9 +409,8 @@ def main(argv):
             prob_thresh = float(arg)
 
     if not csv_filename:
-        csv_filename = 'results.csv'
-    # open the csv file
-    init_csv(csv_filename)
+        # open the csv file
+        init_csv(csv_filename)
 
     # Populate whitelist
     readWhitelist((whitelist_file))
@@ -481,7 +480,8 @@ def main(argv):
     print "Lines per second:", lines_per_sec
     if ip_list:
         printIpList(ip_list)
-        gen_csv(csv_filename,ip_list)
+        if csv_filename:
+            gen_csv(csv_filename,ip_list)
 
 
 
