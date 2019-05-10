@@ -383,14 +383,16 @@ def main(argv):
     #logger.addHandler((handler))
     #logger.setLevel(logging.ERROR)
     try:
-        opts, args=getopt.getopt(argv,"ho:w:x:m:",["help","output=","whitelist=","csv=","mongodb="])
+        opts, args=getopt.getopt(argv,"ho:w:x:m:p:",["help","output=","whitelist=","csv=","mongodb=","prob="])
     except getopt.GetoptError:
         print("dashboard-post-procss.py -i <inputfile> -o [Y/N] -w <whitelist> -m <mongo URI>")
         sys.exit(2)
 
+    prob_thresh = .9 # default value
+
     for opt, arg in opts:
         if opt == '-h':
-            print('usage: dashboard-post-process -i <inputfile> -o [Y/N] -w <whitelist> -x <csv file>')
+            print('usage: dashboard-post-process -i <inputfile> -o [Y/N] -w <whitelist> -x <csv file> -x <prob>')
             sys.exit()
         if opt in ("-o", "--output"):
             if arg == 'Y':
@@ -403,6 +405,8 @@ def main(argv):
             mongo_uri = arg
         if opt in ("-x", "--csv"):
             csv_filename = arg
+        if opt in ("-p", "--prob"):
+            prob_thresh = float(arg)
 
     if not csv_filename:
         csv_filename = 'results.csv'
@@ -437,7 +441,7 @@ def main(argv):
                 # save_to_mongo2(j)
                 lines_processed += 1
 
-                if j['p_malware'] > .7:
+                if j['p_malware'] > prob_thresh:
 
                     source = get_host_name(j['sa']) # Check to see if the ASN is on the white list
                     destination = get_host_name(j['da'])
