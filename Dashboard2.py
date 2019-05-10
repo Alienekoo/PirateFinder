@@ -383,14 +383,14 @@ def main(argv):
     #logger.addHandler((handler))
     #logger.setLevel(logging.ERROR)
     try:
-        opts, args=getopt.getopt(argv,"ho:w:m:",["help","output=","whitelist=","mongodb="])
+        opts, args=getopt.getopt(argv,"ho:w:x:m:",["help","output=","whitelist=","csv=","mongodb="])
     except getopt.GetoptError:
         print("dashboard-post-procss.py -i <inputfile> -o [Y/N] -w <whitelist> -m <mongo URI>")
         sys.exit(2)
 
     for opt, arg in opts:
         if opt == '-h':
-            print('usage: dashboard-post-process -i <inputfile> -o [Y/N] -w <whitelist>')
+            print('usage: dashboard-post-process -i <inputfile> -o [Y/N] -w <whitelist> -x <csv file>')
             sys.exit()
         if opt in ("-o", "--output"):
             if arg == 'Y':
@@ -401,8 +401,11 @@ def main(argv):
             whitelist_file = arg
         if opt in ("-m", "--mongodb"):
             mongo_uri = arg
+        if opt in ("-x", "--csv"):
+            csv_filename = arg
 
-    csv_filename = 'results.csv'
+    if not csv_filename:
+        csv_filename = 'results.csv'
     # open the csv file
     init_csv(csv_filename)
 
