@@ -88,25 +88,27 @@ def main(argv):
     threads = []
     # Read and process one line at time from stdin
     last_time = time.time()
+    bulk = []
+    count = 0
     for line in sys.stdin:
-
         line_count += 1
+        count += 1
         aline = ''.join(char for char in line if ord(char) != 45)
         j = json.loads(aline)
+        bulk.append(j)
+        if count > 10000:
+            try:
+                dbResult = db.flows2.insert_many(bulk)
+            except Exception as e:
+                print(e)
+            count = 0
+            bulk = []
 
-        try:
-            dbResult = db.flows2.insert_one(j)
-
-        except Exception as e:
-            print(e)
-
-        if line_count % 100 == 0:
+        if line_count % 10000 == 0:
             print "Lines processed", line_count
             delta_t = time.time() - last_time
             lines_per_sec = line_count / delta_t
             print "Lines per second:", lines_per_sec
-
-        line = sys.stdin
 
 
 if __name__ == "__main__":
