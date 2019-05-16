@@ -68,7 +68,8 @@ THREAD_COUNT = 2
 
 def main(argv):
 
-    mongo_uri = atlas_connection
+    #mongo_uri = atlas_connection
+    mongo_uri = "mongodb://localhost:27017/"
 
     try:
         client = MongoClient(mongo_uri)
