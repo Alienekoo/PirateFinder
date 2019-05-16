@@ -92,23 +92,22 @@ def main(argv):
     count = 0
     for line in sys.stdin:
         line_count += 1
-        count += 1
         aline = ''.join(char for char in line if ord(char) != 45)
         j = json.loads(aline)
         bulk.append(j)
-        if count > 10000:
+        if line_count % 1000 == 0:
             try:
                 dbResult = db.flows2.insert_many(bulk)
             except Exception as e:
                 print(e)
-            count = 0
             bulk = []
 
-        if line_count % 10000 == 0:
             print "Lines processed", line_count
             delta_t = time.time() - last_time
             lines_per_sec = line_count / delta_t
             print "Lines per second:", lines_per_sec
+            line_count = 0
+            last_time = time.time()
 
 
 if __name__ == "__main__":
