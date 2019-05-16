@@ -66,6 +66,8 @@ class DataInsertThread(Thread):
 
 THREAD_COUNT = 2
 
+BULK_LINES = 10000
+
 def main(argv):
 
     #mongo_uri = atlas_connection
@@ -96,7 +98,7 @@ def main(argv):
         aline = ''.join(char for char in line if ord(char) != 45)
         j = json.loads(aline)
         bulk.append(j)
-        if line_count % 1000 == 0:
+        if line_count % BULK_LINES == 0:
             try:
                 dbResult = db.flows2.insert_many(bulk)
             except Exception as e:
@@ -105,9 +107,8 @@ def main(argv):
 
             print "Lines processed", line_count
             delta_t = time.time() - last_time
-            lines_per_sec = line_count / delta_t
+            lines_per_sec = BULK_LINES / delta_t
             print "Lines per second:", lines_per_sec
-            line_count = 0
             last_time = time.time()
 
 
