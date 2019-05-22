@@ -418,9 +418,9 @@ def main(argv):
     # Populate whitelist
     readWhitelist((whitelist_file))
 
-    if mongo_uri:
-        if not db_initialized:
-            initMongodb(mongo_uri)
+ #   if mongo_uri:
+ #       if not db_initialized:
+ #           initMongodb(mongo_uri)
 
     ts = int(time.time())  # Get Time stamp in seconds
 
