@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from socket import socket
+import socket
 from pprint import pprint
 import sys, getopt
 import warnings
@@ -42,17 +42,6 @@ import json
 
 CARBON_SERVER = "127.0.0.1"
 CARBON_PORT = 2003
-
-ip_dict = {}
-ip_host1 = {}
-ip_host2 = {}
-p_piracy = {}
-bytesout = {}
-pktsout = {}
-saddr_d = {}
-cdn_ips = {}
-flow_cnt = {}
-
 
 dbase_name = 'pirates'
 dashboard_f = False
@@ -76,11 +65,15 @@ def readWhitelist(filename):
             line = fp.readline()
 
 def whitelisted(asn):
+    for n in asn.split("."):
+        if n.lower() in whitelist:
+            return True
+
     for n in asn.split():
         if n.lower() in whitelist:
             return True
-        else:
-            return False
+
+    return False
 
 
 def tryWhoIs(ip_addr):
@@ -102,7 +95,7 @@ def get_host_name(ip):
     try:
         result = socket.gethostbyaddr(ip)
         name = result[0]
-    except:
+    except Exception as e:
         ip = IP(ip)
         if ip.iptype() == 'PRIVATE':
             name = "private"
@@ -111,44 +104,6 @@ def get_host_name(ip):
     hosts[ip] = name
     return name
 
-
-def addToList(ip_list, ip1, ip2, prob, bytes_out, pkts_out, grafana):
-    ip_list.append(ip1)
-
-    try:
-        result = socket.gethostbyaddr(ip1)
-        name1 = result[0]
-    except:
-        ip = IP(ip1)
-        if ip.iptype() == 'PRIVATE':
-            name1 = "private"
-        else:
-            name1 = tryWhoIs(ip1)
-    try:
-        result = socket.gethostbyaddr(ip2)
-        name2 = result[0]
-    except:
-        ip = IP(ip2)
-        if ip.iptype() == 'PRIVATE':
-            name2 = "private"
-        else:
-            name2 = tryWhoIs(ip2)
-
-    ip_host1[ip1] = name1
-    ip_host2[ip1] = name2
-    p_piracy[ip1] = prob
-    saddr_d[ip1] = ip2
-    bytesout[ip1] = bytes_out
-    pktsout[ip1] = pkts_out
-
-    # Check to see if it is in the list of known cdns and public hosts
-    cdn_ips[ip1] = 'no'
-    for n in name1.split():
-        if n in whitelist:
-            cdn_ips[ip1] = 'yes'
-    for n in name2.split():
-        if n in whitelist:
-            cdn_ips[ip1] = 'yes'
 
 
 def addToGrafana(ts, ip1, ip2, prob, bytes_out, pkts_out):
@@ -226,15 +181,63 @@ def gen_csv(csv_file, ipList):
 def init_csv(csv_file):
     open(csv_file, mode='w')
 
+ip_dict = {}
+ip_host1 = {}
+ip_host2 = {}
+p_piracy = {}
+bytesout = {}
+pktsout = {}
+saddr_d = {}
+cdn_ips = {}
+flow_cnt = {}
+sp = {}
+dp = {}
+
+def addToList(ip_list, ip1, sp1, ip2, dp1, prob, bytes_out, pkts_out, grafana):
+    ip_list.append(ip1)
+
+    try:
+        result = socket.gethostbyaddr(ip1)
+        name1 = result[0]
+    except:
+        ip = IP(ip1)
+        if ip.iptype() == 'PRIVATE':
+            name1 = "private"
+        else:
+            name1 = tryWhoIs(ip1)
+    try:
+        result = socket.gethostbyaddr(ip2)
+        name2 = result[0]
+    except:
+        ip = IP(ip2)
+        if ip.iptype() == 'PRIVATE':
+            name2 = "private"
+        else:
+            name2 = tryWhoIs(ip2)
+
+    ip_host1[ip1] = name1
+    ip_host2[ip1] = name2
+    p_piracy[ip1] = prob
+    saddr_d[ip1] = ip2
+    bytesout[ip1] = bytes_out
+    pktsout[ip1] = pkts_out
+    sp[ip1] = sp1
+    dp[ip1] = dp1
+
+    # Check to see if it is in the list of known cdns and public hosts
+    cdn_ips[ip1] = 'no'
+    for n in name1.split():
+        if n in whitelist:
+            cdn_ips[ip1] = 'yes'
+    for n in name2.split():
+        if n in whitelist:
+            cdn_ips[ip1] = 'yes'
+
 def printIpList(ipList):
-    # Print the Header
-    print ('-'*150)
-    print (' p-Piracy',' ' *6, 'bytes', ' '*12, 'IP',' '*6,'<---->','    IP',' '*8,'|','        Hostname',' '*3,'<-->','Hostname',' '*30,'|', 'White-List')
-    print ('-'* 150)
     for ip in ipList:
         host1 = ip_host1[ip].split()
         host2 = ip_host2[ip].split()
-        print ("{: <16}{: <16}{: <2}<--> {: <16} | {: <30} <--> {: <30} | {: <10}".format(p_piracy[ip], bytesout[ip], ip, saddr_d[ip], host1[0], host2[0],cdn_ips[ip]))
+        print ("{: <10}{: <8}{: <2}:{: <2}<-->{: <12}:{: <8} | {: <5}<-->{: <30} ".format(p_piracy[ip], bytesout[ip], ip, sp[ip], saddr_d[ip],dp[ip], host1[0], host2[0]))
 
 
 def is_empty(any):
@@ -371,7 +374,7 @@ atlas_connection = "mongodb://pymongo:ncta1234@testcluster0-shard-00-00-e9cwj.mo
 def main(argv):
 
     inputfile = ''
-    mongo_uri = atlas_connection
+    mongo_uri = "mongodb://127.0.0.1:27017"
     whitelist_file = "whitelist.txt"
     ip_list = []
 
@@ -445,13 +448,13 @@ def main(argv):
                     source = get_host_name(j['sa']) # Check to see if the ASN is on the white list
                     destination = get_host_name(j['da'])
                     if not whitelisted(source) and not whitelisted(destination):
-                        save_to_mongo(mongo_uri, j)
-                        save_to_mongo2(mongo_uri,j)
+                        #save_to_mongo(mongo_uri, j)
+                        #save_to_mongo2(mongo_uri,j)
 
                         if ip_list.count(j['sa']) == 0 :
-                            addToList(ip_list, j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                            addToList(ip_list, j['sa'], j['sp'], j['da'], j['dp'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
                         elif ip_list.count(j['da']) == 0 :
-                            addToList(ip_list, j['da'], j['sa'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
+                            addToList(ip_list, j['da'], j['sp'], j['sa'], j['dp'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
                         else:
                             # we already know of these IPs, maybe we average the probability?
                             pass
@@ -461,15 +464,11 @@ def main(argv):
                 lines_notprocessed += 1
                 pass # keep going
 
-            if line_count % 10000== 0:
-                print "Lines processed", line_count
-                delta_t = time.time() - last_time
-                lines_per_sec = line_count / delta_t
-                print "Lines per second:", lines_per_sec
-                if ip_list:
-                    printIpList(ip_list)
-                    gen_csv(csv_filename, ip_list)
-                    ip_list = []
+
+            if ip_list:
+                printIpList(ip_list)
+                # gen_csv(csv_filename, ip_list)
+                ip_list = []
 
 
 
