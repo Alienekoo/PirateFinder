@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from socket import socket
+import socket
 from pprint import pprint
 import sys, getopt
 import warnings
@@ -75,12 +75,12 @@ def readWhitelist(filename):
             whitelist.append(line.rstrip().lower())
             line = fp.readline()
 
-def whitelisted(asn):
-    for n in asn.split():
+def whitelisted(host):
+    for n in host.split("."):
         if n.lower() in whitelist:
             return True
-        else:
-            return False
+
+    return False
 
 
 def tryWhoIs(ip_addr):
@@ -102,7 +102,7 @@ def get_host_name(ip):
     try:
         result = socket.gethostbyaddr(ip)
         name = result[0]
-    except:
+    except Exception as e:
         ip = IP(ip)
         if ip.iptype() == 'PRIVATE':
             name = "private"
@@ -415,9 +415,9 @@ def main(argv):
     # Populate whitelist
     readWhitelist((whitelist_file))
 
-    if mongo_uri:
-        if not db_initialized:
-            initMongodb(mongo_uri)
+ #   if mongo_uri:
+ #       if not db_initialized:
+ #           initMongodb(mongo_uri)
 
     ts = int(time.time())  # Get Time stamp in seconds
 
@@ -445,8 +445,8 @@ def main(argv):
                     source = get_host_name(j['sa']) # Check to see if the ASN is on the white list
                     destination = get_host_name(j['da'])
                     if not whitelisted(source) and not whitelisted(destination):
-                        save_to_mongo(mongo_uri, j)
-                        save_to_mongo2(mongo_uri,j)
+                        #save_to_mongo(mongo_uri, j)
+                        #save_to_mongo2(mongo_uri,j)
 
                         if ip_list.count(j['sa']) == 0 :
                             addToList(ip_list, j['sa'], j['da'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
