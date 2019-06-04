@@ -10,8 +10,11 @@
  * /bin/joy firstcapture.pcap | ./mongocpath                        //to run
 */
 
-int main() { 
-    
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        printf("please make sure you are also entering the name of the collection you want to use");
+        return -1;
+    }
     char *line = NULL;
     size_t size;
     char *version = "version";
@@ -37,9 +40,9 @@ int main() {
     clock_t total_t;
     clock_t last_time;
     mongoc_init();
-    
+
     client = mongoc_client_new("mongodb://localhost:27017/?appname=flowanalyzer");
-    collection = mongoc_client_get_collection(client, "flowdb", "flowcoll");
+    collection = mongoc_client_get_collection(client, "flowdb", argv[1]);
     
     
     //pointer to any minus signs in string
