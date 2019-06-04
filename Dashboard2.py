@@ -443,7 +443,8 @@ def main(argv):
                 # save_to_mongo2(j)
                 lines_processed += 1
 
-                if j['p_malware'] > prob_thresh:
+                skip_ports = {443, 53, 22}
+                if (j['p_malware'] > prob_thresh) and (j['dp'] not in skip_ports) and (j['sp'] not in skip_ports) :
 
                     source = get_host_name(j['sa']) # Check to see if the ASN is on the white list
                     destination = get_host_name(j['da'])
