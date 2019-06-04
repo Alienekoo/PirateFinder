@@ -11,7 +11,7 @@ from geoip import geolite2
 hosts = {}
 asns = {}
 geoloc = {}
-asndb = pyasn.pyasn('ipasn_db.dat')
+asndb = pyasn.pyasn('ipasn_db2.dat')
 def get_host_name(ip):
     name = ''
     asn, cidr = asndb.lookup(ip)
@@ -53,14 +53,17 @@ def aggregate(doc):
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 mydb = client["flowdb"]
-if 'ann_flow' in mydb.list_collection_names():
-    collection = mydb['ann_flow']
+cname = raw_input('What is the collection name? ')
+aname = raw_input('Name the annotated collection: ')
+if aname in mydb.list_collection_names():
+    collection = mydb[aname]
     collection.drop()
-iflowc = mydb['flowcoll']
+iflowc = mydb[cname]
+
 #sif 'ann_flow' not in mydb.list_collection_names():
     #mydb.create_collection('ann_flow', capped=True, size = 500000, max = 1000000)
-annflowc = mydb['ann_flow']
-mydb.ann_flow.create_index([('da', 1)], unique = False)
+annflowc = mydb[aname]
+annflowc.create_index([('da', 1)], unique = False)
 
 
 
