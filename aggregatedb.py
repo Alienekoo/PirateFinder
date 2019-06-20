@@ -49,6 +49,10 @@ def aggregate(doc):
         aggdoc = aggflowc.find_one(query)
         agg_time_start = aggdoc['time_start']
         #agg_time_end = aggdoc['time_end']
+        try :
+            bps = aggdoc['total_bytes'] * 8 / (time_e - agg_time_start[0])
+        except:
+            bps = aggdoc['total_bytes'] * 8
         a = aggdoc['byte_dist']
         for i in range(len(a)):
             byte_dist[i] += a[i]
@@ -59,9 +63,10 @@ def aggregate(doc):
             '$push': {'byte_array': i_bytes + o_bytes, 'time_start': time_s, 'time_end': time_e, 'dt': dt,
                       'dp': dp, 'sp': sp, 'p_malware': p_malware, 'conv_packets': packets,
                       'ift': abs(time_s - agg_time_start[aggdoc['# of flows'] - 1])},
-            '$set': {'conv_time': time_e - agg_time_start[0], 'byte_dist': byte_dist}
+            '$set': {'conv_time': time_e - agg_time_start[0], 'byte_dist': byte_dist, 'bps': bps}
                    }
         aggflowc.update_one(query, newvals)
+
         #keyset[ip_tuple] += 1
 
     else:
@@ -84,6 +89,10 @@ def aggregate(doc):
         newdoc['num_pkts_in'] = i_pkts
         newdoc['num_pkts_out'] = o_pkts
         newdoc['byte_dist'] = byte_dist
+        try:
+            newdoc['bps'] = newdoc['total_bytes'] * 8 / newdoc['conv_time']
+        except:
+            newdoc['bps'] = newdoc['total_bytes']
         #derivative of dt
         aggflowc.insert(newdoc)
 
