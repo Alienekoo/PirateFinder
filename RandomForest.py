@@ -367,11 +367,13 @@ test_file = "mediacom1small.json"
 flows = getFlowData(test_file)
 flowcount = 0
 piratecount = 0
+table = []
 for flow in flows:
     meta = getFlowMetadata(flow)
     data = []
 
     flowcount = flowcount+1
+    row = []
     for i in range(len(meta)):
         tmp = []
         tmp.extend(meta[i])
@@ -385,4 +387,16 @@ for flow in flows:
             # print prediction[:,1], flow['sa'], flow['da'], data
             piratecount = piratecount+1
 
+        tmp.append(flow['sa'])
+        tmp.append(flow['da'])
+        tmp.append(prediction[:,1])
+        table.append(tmp)
+
+
 print flowcount, piratecount
+
+headings=["DP","SP","PktsIn","PktsOut", "BytesIn", "BytesOut","Packets", "SA","DA","Prediction"]
+datapd = pd.DataFrame.from_records(table, columns=headings)
+print datapd.head()
+
+
