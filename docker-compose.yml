@@ -40,21 +40,21 @@ services:
 #       - output:/PirateFinder/output
 #     entrypoint: /PirateFinder/output/collector.sh enx00e04c780c01
 
-  probe:
-     build:
-       context: ./probe
-     container_name: probe
-     restart: always
+#  probe:
+#     build:
+#       context: ./probe
+#     container_name: probe
+#     restart: always
 # Uncomment for it to use a bridged network
 #     networks:
 #       - grafana-net
 # Uncomment to run it in host mode
-     network_mode: "host"
-     volumes:
-       - output:/PirateFinder/output
-       - ./classifiers:/PirateFinder/classifiers
-       - ./config:/PirateFinder/config       
-     entrypoint: /PirateFinder/output/probe.sh enp0s3
+#     network_mode: "host"
+#     volumes:
+#       - output:/PirateFinder/output
+#       - ./classifiers:/PirateFinder/classifiers
+#       - ./config:/PirateFinder/config       
+#     entrypoint: /PirateFinder/output/probe.sh enp0s3
 
   dashboard:
      build: dashboard

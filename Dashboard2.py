@@ -37,6 +37,7 @@ from pymongo import MongoClient
 import logging
 from logging.config import fileConfig
 import json
+import math
 
 
 
@@ -370,6 +371,69 @@ atlas_connection = "mongodb://pymongo:ncta1234@testcluster0-shard-00-00-e9cwj.mo
 # Python 3.6
 #atlas_connection = "mongodb+srv://pymongo:ncta1234@testcluster0-e9cwj.mongodb.net/test?retryWrites=true"
 
+parameters_splt = [] # list
+def update_params(param_type, params_file):
+    if (params_file == ''):
+        print "no file name specified"
+        return
+
+    f = open(params_file)
+    for line in f:
+        parameters_splt.append(line)
+
+    f.close()
+
+
+def classify(flow):
+    features = [] # list
+
+    features.append(1) # features[0] = 0.0
+    features.append(flow['dp'])
+    features.append(flow['sp'])
+    try:
+        features.append(flow['num_pkts_in'])
+    except:
+        features.append(0.0)
+    try:
+        features.append(flow['num_pkts_out'])
+    except:
+        features.append(0.0)
+    try:
+        features.append(flow['bytes_in'])
+    except:
+        features.append(0.0)
+    try:
+        features.append(flow['bytes_out'])
+    except:
+        features.append(0.0)
+
+    features.append(0.0)
+
+    duration = flow["time_end"] - flow["time_start"]
+    features[7] = duration/1000
+
+    # Lengths
+    # Times
+    # Byte Distrubtion
+
+    #Score
+    try:
+        score = 0.0
+        index = 0
+        for feature in features:
+            param = float(parameters_splt[index])
+            score = score +(feature * param)
+            index = index + 1
+    except Exception as e:
+        print e
+
+    score = min(-score, 500.0)
+
+    score = 1.0/(1.0+math.exp(score))
+
+    return score
+
+
 
 def main(argv):
 
@@ -428,6 +492,8 @@ def main(argv):
     lines_processed = 0
     lines_notprocessed = 0
 
+    update_params("SPLT","/home/ncta/PirateFinder/params_m.txt")
+
     # Read and process one line at time from stdin
     last_time = time.time()
     for line in sys.stdin:
@@ -443,6 +509,10 @@ def main(argv):
                 # save_to_mongo2(j)
                 lines_processed += 1
 
+                p_piracy = classify(j)
+                p_malware = j['p_malware']
+                print("p_piracy % 2.5f  p_malware % 2.5f" %(p_piracy, p_malware))
+
                 skip_ports = {443, 53, 22}
                 if (j['p_malware'] > prob_thresh) and (j['dp'] not in skip_ports) and (j['sp'] not in skip_ports) :
 
@@ -451,6 +521,9 @@ def main(argv):
                     if not whitelisted(source) and not whitelisted(destination):
                         #save_to_mongo(mongo_uri, j)
                         #save_to_mongo2(mongo_uri,j)
+
+
+
 
                         if ip_list.count(j['sa']) == 0 :
                             addToList(ip_list, j['sa'], j['sp'], j['da'], j['dp'], j['p_malware'], j['bytes_out'], j['num_pkts_out'], False)
